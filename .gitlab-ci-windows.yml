@@ -1,0 +1,40 @@
+stages:
+  - build
+
+variables:
+  # 设置Docker镜像
+  DOTNET_IMAGE: mcr.microsoft.com/dotnet/framework/sdk:4.6.2
+  # 设置工作目录
+  WORKING_DIR: "D:/Repo/project"
+  # MSBuild路径
+  MSBUILD_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/MSBuild/15.0/Bin/MSBuild.exe"
+
+# 构建阶段
+build:
+  stage: build
+  tags:
+    - windows  # 确保使用Windows Runner
+  image: $DOTNET_IMAGE
+  script:
+    # 显示环境信息
+    - echo "Starting build process..."
+    - echo "Current directory: $(pwd)"
+    - echo "MSBuild version:"
+    - $MSBUILD_PATH /version
+    
+    # 还原NuGet包
+    - echo "Restoring NuGet packages..."
+    - nuget restore "$WORKING_DIR/pj.sln"
+    
+    # 构建解决方案
+    - echo "Building solution..."
+    - $MSBUILD_PATH "$WORKING_DIR/pj.sln" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
+    
+    # 检查构建结果
+    - if (!(Test-Path "$WORKING_DIR/bin/Release")) { throw "Build failed - Release directory not found" }
+    - echo "Build completed successfully"
+    
+  artifacts:
+    paths:
+      - $WORKING_DIR/bin/Release/
+    expire_in: 1 week
