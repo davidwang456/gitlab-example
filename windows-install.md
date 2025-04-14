@@ -49,6 +49,115 @@
    choco install gitlab-runner --version=17.5.0
    ```
 
+## 安装 MSBuild 和 .NET Framework SDK
+
+### 方法一：使用 Visual Studio Build Tools（推荐）
+
+1. **下载 Visual Studio Build Tools**：
+   - 访问 Visual Studio 下载页面：https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
+   - 下载 "Build Tools for Visual Studio 2022"
+
+2. **安装步骤**：
+   ```powershell
+   # 1. 运行下载的安装程序
+   # 2. 选择 "Visual Studio Build Tools"
+   # 3. 在工作负载中选择：
+   #    - .NET Framework 4.6.2 开发工具
+   #    - .NET 桌面生成工具
+   #    - MSBuild
+   # 4. 在单个组件中确保选择：
+   #    - Windows 10 SDK
+   #    - .NET Framework 4.6.2 SDK
+   ```
+
+3. **验证安装**：
+   ```powershell
+   # 检查 MSBuild 版本
+   & "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" /version
+
+   # 检查 .NET Framework 版本
+   Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse | Get-ItemProperty -Name Version -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -Match '^(?!S)\p{L}'} | Select-Object PSChildName, Version
+   ```
+
+### 方法二：使用 Chocolatey 安装
+
+1. **安装 Chocolatey**（如果尚未安装）：
+   ```powershell
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   ```
+
+2. **安装 MSBuild 和 .NET Framework SDK**：
+   ```powershell
+   # 安装 MSBuild
+   choco install microsoft-build-tools
+
+   # 安装 .NET Framework SDK
+   choco install dotnetfx
+   ```
+
+3. **验证安装**：
+   ```powershell
+   # 检查 MSBuild 是否在 PATH 中
+   Get-Command msbuild
+
+   # 检查 .NET Framework 版本
+   Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse | Get-ItemProperty -Name Version -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -Match '^(?!S)\p{L}'} | Select-Object PSChildName, Version
+   ```
+
+### 方法三：手动安装 .NET Framework SDK
+
+1. **下载 .NET Framework SDK**：
+   - 访问 Microsoft 下载中心：https://dotnet.microsoft.com/download/dotnet-framework
+   - 下载 .NET Framework 4.6.2 Developer Pack
+
+2. **安装步骤**：
+   ```powershell
+   # 运行下载的安装程序
+   # 按照安装向导完成安装
+   ```
+
+3. **配置环境变量**：
+   ```powershell
+   # 添加 MSBuild 到 PATH
+   $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin"
+   
+   # 永久设置环境变量
+   [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin", "Machine")
+   ```
+
+### 常见问题解决
+
+1. **MSBuild 找不到**：
+   ```powershell
+   # 检查 MSBuild 路径
+   Get-ChildItem -Path "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe"
+   ```
+
+2. **.NET Framework 版本问题**：
+   ```powershell
+   # 安装特定版本的 .NET Framework
+   choco install dotnetfx --version=4.6.2
+   ```
+
+3. **权限问题**：
+   ```powershell
+   # 以管理员身份运行 PowerShell
+   Start-Process powershell -Verb RunAs
+   ```
+
+### 验证安装完成
+
+```powershell
+# 检查 MSBuild
+& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" /version
+
+# 检查 .NET Framework
+Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse | Get-ItemProperty -Name Version -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -Match '^(?!S)\p{L}'} | Select-Object PSChildName, Version
+
+# 检查环境变量
+$env:Path
+```
+
 ## 注册 Runner
 
 安装完成后，需要注册 Runner：
@@ -241,19 +350,19 @@ Remove-Item -Recurse -Force "C:\GitLab-Runner"
    - **注意**：若需全局生效，建议使用 `certlm.msc`（计算机证书存储）。
 
 2. **导入证书**  
-   - 展开 **“受信任的根证书颁发机构”** → 右键 **“证书”** → 选择 **“所有任务”** → **“导入”**。
+   - 展开 **"受信任的根证书颁发机构"** → 右键 **"证书"** → 选择 **"所有任务"** → **"导入"**。
 
 3. **选择证书文件**  
-   - 点击 **“下一步”** → **“浏览”**，选择证书文件（如 `.cer` 或 `.crt` 格式），按向导完成导入。
+   - 点击 **"下一步"** → **"浏览"**，选择证书文件（如 `.cer` 或 `.crt` 格式），按向导完成导入。
 
 4. **验证添加结果**  
-   - 在 **“受信任的根证书颁发机构” → “证书”** 列表中，确认证书已存在。
+   - 在 **"受信任的根证书颁发机构" → "证书"** 列表中，确认证书已存在。
 
 ---
 
 ### **方法 2：通过命令行（PowerShell 或 CMD）**
 1. **以管理员身份运行 PowerShell**  
-   - 右键点击 PowerShell 图标，选择 **“以管理员身份运行”**。
+   - 右键点击 PowerShell 图标，选择 **"以管理员身份运行"**。
 
 2. **使用 `Import-Certificate` 命令**  
    ```powershell

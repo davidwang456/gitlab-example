@@ -2,8 +2,8 @@ stages:
   - build
 
 variables:
-  # 设置Docker镜像
-  DOTNET_IMAGE: mcr.microsoft.com/dotnet/framework/sdk:4.6.2
+  # 设置Docker镜像 - 使用Windows Server Core基础镜像
+  DOTNET_IMAGE: mcr.microsoft.com/dotnet/framework/sdk:4.6.2-windowsservercore-ltsc2016
   # 设置工作目录
   WORKING_DIR: "D:/Repo/project"
   # MSBuild路径
@@ -16,21 +16,14 @@ build:
     - windows  # 确保使用Windows Runner
   image: $DOTNET_IMAGE
   script:
-    # 显示环境信息
     - echo "Starting build process..."
     - echo "Current directory: $(pwd)"
     - echo "MSBuild version:"
     - $MSBUILD_PATH /version
-    
-    # 还原NuGet包
     - echo "Restoring NuGet packages..."
     - nuget restore "$WORKING_DIR/pj.sln"
-    
-    # 构建解决方案
     - echo "Building solution..."
     - $MSBUILD_PATH "$WORKING_DIR/pj.sln" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
-    
-    # 检查构建结果
     - if (!(Test-Path "$WORKING_DIR/bin/Release")) { throw "Build failed - Release directory not found" }
     - echo "Build completed successfully"
     
