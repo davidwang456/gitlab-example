@@ -1,0 +1,33 @@
+stages:
+  - quality
+
+sonarqube-analysis:
+  stage: quality
+  image: 
+    name: your-sonar-scanner-image:latest  # 请替换为你的SonarScanner Docker镜像
+    entrypoint: [""]
+  tags:
+    - docker  # 指定使用docker标签的runner
+  variables:
+    # 配置SonarQube相关变量
+    SONAR_HOST_URL: "http://your-sonarqube-server:9000"  # 替换为实际的SonarQube服务器地址
+    SONAR_TOKEN: ${SONAR_TOKEN}  # 从GitLab变量中获取
+    # 添加项目相关的配置
+    SONAR_PROJECT_KEY: "your-project-key"
+    SONAR_PROJECT_NAME: "Your Project Name"
+  script:
+    # 直接在当前工作目录执行，不进行任何目录切换
+    - echo "Current directory: $(pwd)"
+    - ls -la
+    - /opt/sonar-scanner/bin/sonar-scanner
+      -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+      -Dsonar.projectName=${SONAR_PROJECT_NAME}
+      -Dsonar.sources=.
+      -Dsonar.host.url=${SONAR_HOST_URL}
+      -Dsonar.login=${SONAR_TOKEN}
+      -Dsonar.java.binaries=.  # 如果是Java项目，需要设置此项
+  allow_failure: true  # 可选：允许SonarQube分析失败而不影响流水线
+  only:
+    - merge_requests
+    - main
+    - develop 

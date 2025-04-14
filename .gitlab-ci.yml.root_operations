@@ -1,0 +1,42 @@
+stages:
+  - quality
+
+sonarqube-analysis:
+  stage: quality
+  image: alpine:latest
+  services:
+    - name: your-sonar-scanner-image:latest
+      alias: sonarscanner
+  tags:
+    - docker
+  variables:
+    # 配置SonarQube相关变量
+    SONAR_HOST_URL: "http://your-sonarqube-server:9000"
+    SONAR_TOKEN: ${SONAR_TOKEN}
+    SONAR_PROJECT_KEY: "your-project-key"
+    SONAR_PROJECT_NAME: "Your Project Name"
+  script:
+    - echo "Current directory: $(pwd)"
+    - ls -la
+    # 使用docker命令在服务容器中运行sonar-scanner，以root用户身份并执行额外操作
+    - >
+      docker run --rm --user root -v $(pwd):/src
+      your-sonar-scanner-image:latest
+      sh -c "
+      # 在这里可以执行任何需要root权限的操作
+      chown -R root:root /src &&
+      chmod -R 755 /src &&
+      # 然后运行sonar-scanner
+      /opt/sonar-scanner/bin/sonar-scanner
+      -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+      -Dsonar.projectName=${SONAR_PROJECT_NAME}
+      -Dsonar.sources=/src
+      -Dsonar.host.url=${SONAR_HOST_URL}
+      -Dsonar.login=${SONAR_TOKEN}
+      -Dsonar.java.binaries=/src
+      "
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop 

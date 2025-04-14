@@ -1,0 +1,47 @@
+stages:
+  - quality
+
+sonarqube-analysis:
+  stage: quality
+  image: alpine:latest
+  services:
+    - name: your-sonar-scanner-image:latest
+      alias: sonarscanner
+  tags:
+    - docker
+  variables:
+    # 配置SonarQube相关变量
+    SONAR_HOST_URL: "http://your-sonarqube-server:9000"
+    SONAR_TOKEN: ${SONAR_TOKEN}
+    SONAR_PROJECT_KEY: "your-project-key"
+    SONAR_PROJECT_NAME: "Your Project Name"
+  script:
+    - echo "Current directory: $(pwd)"
+    - ls -la
+    # 测试SonarQube服务器连接
+    - wget -q --spider ${SONAR_HOST_URL} || echo "SonarQube server not reachable!"
+    # 使用详细模式运行SonarScanner，增加内存限制
+    - >
+      docker run --rm -v $(pwd):/src
+      --memory=4g --memory-swap=4g
+      your-sonar-scanner-image:latest
+      /opt/sonar-scanner/bin/sonar-scanner -X
+      -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+      -Dsonar.projectName=${SONAR_PROJECT_NAME}
+      -Dsonar.sources=/src
+      -Dsonar.host.url=${SONAR_HOST_URL}
+      -Dsonar.login=${SONAR_TOKEN}
+      -Dsonar.java.binaries=/src
+      -Dsonar.scm.disabled=true
+      -Dsonar.java.jvm.memory=2048m
+    # 扫描后检查结果状态
+    - sleep 5
+    - echo "Checking project on SonarQube server..."
+    - >
+      curl -s -u ${SONAR_TOKEN}: ${SONAR_HOST_URL}/api/components/show?component=${SONAR_PROJECT_KEY} || 
+      echo "Failed to retrieve project information from SonarQube!"
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop 
