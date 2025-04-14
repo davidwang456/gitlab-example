@@ -79,6 +79,97 @@ cd "C:\GitLab-Runner"
 .\gitlab-runner.exe status
 ```
 
+## 证书配置
+
+如果遇到 SSL/TLS 证书验证问题，可以按照以下步骤配置证书：
+
+### 方法一：使用自签名证书
+
+1. **导出 GitLab 服务器的证书**：
+   ```powershell
+   # 使用浏览器访问 GitLab 服务器，导出证书
+   # 1. 点击地址栏的锁图标
+   # 2. 点击"证书"
+   # 3. 选择"详细信息"标签
+   # 4. 点击"复制到文件"
+   # 5. 选择"Base-64 encoded X.509 (.CER)"
+   ```
+
+2. **将证书添加到 Windows 证书存储**：
+   ```powershell
+   # 以管理员身份运行 PowerShell
+   Import-Certificate -FilePath "C:\path\to\your\gitlab.crt" -CertStoreLocation Cert:\LocalMachine\Root
+   ```
+
+3. **配置 GitLab Runner 使用证书**：
+   ```powershell
+   # 创建配置文件目录
+   mkdir "C:\GitLab-Runner\certs"
+   
+   # 复制证书到配置目录
+   copy "C:\path\to\your\gitlab.crt" "C:\GitLab-Runner\certs\ca.crt"
+   
+   # 注册时指定证书
+   .\gitlab-runner.exe register --tls-ca-file "C:\GitLab-Runner\certs\ca.crt"
+   ```
+
+### 方法二：禁用证书验证（不推荐用于生产环境）
+
+1. **修改 GitLab Runner 配置**：
+   ```powershell
+   # 编辑配置文件
+   notepad "C:\GitLab-Runner\config.toml"
+   ```
+
+2. **添加以下配置**：
+   ```toml
+   [[runners]]
+     [runners.custom]
+       tls-ca-file = ""
+       tls-verify = false
+   ```
+
+### 方法三：使用系统代理（如果使用代理服务器）
+
+1. **设置环境变量**：
+   ```powershell
+   # 设置代理环境变量
+   [Environment]::SetEnvironmentVariable("HTTP_PROXY", "http://proxy.example.com:8080", "Machine")
+   [Environment]::SetEnvironmentVariable("HTTPS_PROXY", "http://proxy.example.com:8080", "Machine")
+   
+   # 重启 GitLab Runner 服务
+   Restart-Service gitlab-runner
+   ```
+
+### 验证证书配置
+
+```powershell
+# 测试与 GitLab 服务器的连接
+Invoke-WebRequest -Uri "https://git.xxx.com/api/v4/version" -UseBasicParsing
+```
+
+### 常见证书错误解决
+
+1. **证书链不完整**：
+   ```powershell
+   # 导出完整的证书链
+   # 使用浏览器导出所有中间证书和根证书
+   ```
+
+2. **证书过期**：
+   ```powershell
+   # 检查证书有效期
+   $cert = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object {$_.Subject -like "*git.xxx.com*"}
+   $cert.NotAfter
+   ```
+
+3. **证书名称不匹配**：
+   ```powershell
+   # 检查证书主题名称
+   $cert = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object {$_.Subject -like "*git.xxx.com*"}
+   $cert.Subject
+   ```
+
 ## 常见问题解决
 
 1. **权限问题**：
@@ -138,3 +229,65 @@ Remove-Item -Recurse -Force "C:\GitLab-Runner"
 3. 如果使用 Docker 执行器，确保已安装 Docker Desktop
 4. 定期检查 Runner 的日志文件（通常在 `C:\GitLab-Runner\logs`）
 5. 确保 GitLab Runner 版本与 GitLab 服务器版本兼容 
+
+
+在 **Windows Server 2022** 中，添加信任证书（如根证书或自签名证书）的步骤如下：
+
+---
+
+### **方法 1：通过图形界面添加**
+1. **打开证书管理控制台**  
+   - 按 `Win + R`，输入 `certlm.msc`（管理当前用户的证书）或 `certmgr.msc`（管理计算机范围的证书），按回车。  
+   - **注意**：若需全局生效，建议使用 `certlm.msc`（计算机证书存储）。
+
+2. **导入证书**  
+   - 展开 **“受信任的根证书颁发机构”** → 右键 **“证书”** → 选择 **“所有任务”** → **“导入”**。
+
+3. **选择证书文件**  
+   - 点击 **“下一步”** → **“浏览”**，选择证书文件（如 `.cer` 或 `.crt` 格式），按向导完成导入。
+
+4. **验证添加结果**  
+   - 在 **“受信任的根证书颁发机构” → “证书”** 列表中，确认证书已存在。
+
+---
+
+### **方法 2：通过命令行（PowerShell 或 CMD）**
+1. **以管理员身份运行 PowerShell**  
+   - 右键点击 PowerShell 图标，选择 **“以管理员身份运行”**。
+
+2. **使用 `Import-Certificate` 命令**  
+   ```powershell
+   Import-Certificate -FilePath "C:\path\to\certificate.cer" -CertStoreLocation Cert:\LocalMachine\Root
+   ```
+   - 将 `C:\path\to\certificate.cer` 替换为实际证书路径。
+
+3. **验证是否成功**  
+   ```powershell
+   Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like "*证书名称*" }
+   ```
+
+---
+
+### **方法 3：通过 certutil 工具**
+1. **以管理员身份运行 CMD**  
+   ```cmd
+   certutil -addstore -f "Root" C:\path\to\certificate.cer
+   ```
+
+---
+
+### **注意事项**
+- **权限要求**：操作计算机证书存储需管理员权限。
+- **证书格式**：确保证书文件为 `.cer` 或 `.crt` 格式，若为 `.pfx`，需先导出公钥。
+- **作用范围**：
+  - **LocalMachine（计算机）**：对所有用户生效。
+  - **CurrentUser（当前用户）**：仅对当前用户生效。
+- **重启服务**：部分服务（如 IIS）可能需要重启才能加载新证书。
+
+---
+
+### **常见问题**
+- **证书不受信任**：确保证书链完整（如中间证书已安装）。
+- **证书冲突**：若重复导入同名证书，系统会覆盖旧证书。
+
+按需选择上述方法，即可完成证书信任配置！
