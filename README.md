@@ -11,3 +11,6 @@ https://docs.gitlab.com/ci/yaml/
 
 rest api
 https://docs.gitlab.com/api/rest/
+
+blackduck 多语言支持
+https://documentation.blackduck.com/zh-CN/bundle/detect/page/properties/detectors/overview.html

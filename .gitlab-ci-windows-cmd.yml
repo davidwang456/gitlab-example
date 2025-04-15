@@ -1,0 +1,31 @@
+stages:
+  - build
+
+variables:
+  # 设置工作目录
+  WORKING_DIR: "D:/Repo/project"
+  # MSBuild路径
+  MSBUILD_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/MSBuild/15.0/Bin/MSBuild.exe"
+
+# 构建阶段
+build:
+  stage: build
+  tags:
+    - windows  # 确保使用Windows Runner
+  before_script:
+    - Write-Host "Starting build process..."
+  script:
+    - Write-Host "Current directory: $(pwd)"
+    - Write-Host "MSBuild version:"
+    - & "$MSBUILD_PATH" /version
+    - Write-Host "Restoring NuGet packages..."
+    - nuget restore "$WORKING_DIR/pj.sln"
+    - Write-Host "Building solution..."
+    - & "$MSBUILD_PATH" "$WORKING_DIR/pj.sln" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
+    - if (!(Test-Path "$WORKING_DIR/bin/Release")) { throw "Build failed - Release directory not found" }
+    - Write-Host "Build completed successfully"
+    
+  artifacts:
+    paths:
+      - "$WORKING_DIR/bin/Release/"
+    expire_in: 1 week 
