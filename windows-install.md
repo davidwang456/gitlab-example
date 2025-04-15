@@ -400,3 +400,9 @@ Remove-Item -Recurse -Force "C:\GitLab-Runner"
 - **证书冲突**：若重复导入同名证书，系统会覆盖旧证书。
 
 按需选择上述方法，即可完成证书信任配置！
+
+# 使用 Chocolatey 安装
+choco install 7zip
+
+# 或下载安装包手动安装
+# 下载地址：https://www.7-zip.org/download.html
