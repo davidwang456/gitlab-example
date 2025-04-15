@@ -37,13 +37,6 @@
    scoop install gitlab-runner
    ```
 
-### 方法三：使用 Chocolatey 包管理器
-
-1. **安装 Chocolatey**（如果尚未安装）：
-   ```powershell
-   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-   ```
-
 2. **安装 GitLab Runner**：
    ```powershell
    choco install gitlab-runner --version=17.5.0
@@ -406,3 +399,136 @@ choco install 7zip
 
 # 或下载安装包手动安装
 # 下载地址：https://www.7-zip.org/download.html
+
+### 方法三：使用 Chocolatey 包管理器
+
+1. **安装 Chocolatey**（如果尚未安装）：
+   ```powershell
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   ```
+
+## 7-Zip 命令行使用指南
+
+### 基本压缩命令
+
+```powershell
+# 压缩文件到zip
+7z a archive.zip file.txt
+
+# 压缩文件夹到zip
+7z a archive.zip folder\
+
+# 使用密码压缩
+7z a -p密码 archive.zip file.txt
+
+# 压缩并分卷（每卷100MB）
+7z a -v100m archive.zip folder\
+```
+
+### 解压命令
+
+```powershell
+# 解压到当前目录
+7z x archive.zip
+
+# 解压到指定目录
+7z x archive.zip -o"D:\解压目录"
+
+# 解压带密码的文件
+7z x -p密码 archive.zip
+
+# 解压特定文件
+7z x archive.zip file.txt
+```
+
+### 查看压缩包内容
+
+```powershell
+# 列出压缩包内容
+7z l archive.zip
+
+# 详细列出压缩包内容
+7z l -slt archive.zip
+```
+
+### 测试压缩包完整性
+
+```powershell
+# 测试压缩包
+7z t archive.zip
+
+# 测试带密码的压缩包
+7z t -p密码 archive.zip
+```
+
+### 删除压缩包中的文件
+
+```powershell
+# 从压缩包中删除文件
+7z d archive.zip file.txt
+```
+
+### 更新压缩包
+
+```powershell
+# 更新压缩包中的文件
+7z u archive.zip file.txt
+```
+
+### 高级压缩选项
+
+```powershell
+# 使用最大压缩率
+7z a -mx=9 archive.zip file.txt
+
+# 排除特定文件
+7z a -x!*.tmp archive.zip folder\
+
+# 压缩时保持目录结构
+7z a -r archive.zip folder\
+```
+
+### 常见参数说明
+
+- `a`: 添加文件到压缩包
+- `x`: 解压文件
+- `l`: 列出压缩包内容
+- `t`: 测试压缩包
+- `d`: 删除压缩包中的文件
+- `u`: 更新压缩包
+- `-p`: 设置密码
+- `-o`: 指定输出目录
+- `-r`: 递归处理子目录
+- `-mx`: 设置压缩级别（0-9）
+- `-v`: 分卷大小
+- `-x`: 排除文件
+
+### 在 CI/CD 中使用示例
+
+```powershell
+# 压缩构建产物
+7z a -mx=9 build_artifacts.zip bin/Release/
+
+# 解压依赖包
+7z x dependencies.zip -o"$env:WORKSPACE\dependencies"
+
+# 压缩日志文件
+7z a -p$env:ARCHIVE_PASSWORD logs.zip *.log
+```
+
+### 批量处理示例
+
+```powershell
+# 批量压缩文件夹
+Get-ChildItem -Directory | ForEach-Object { 7z a "$($_.Name).zip" "$($_.Name)" }
+
+# 批量解压zip文件
+Get-ChildItem *.zip | ForEach-Object { 7z x $_.Name -o"$($_.BaseName)" }
+```
+
+### 注意事项
+
+1. 确保 7-Zip 已添加到系统 PATH
+2. 路径中包含空格时使用引号
+3. 密码区分大小写
+4. 使用管理员权限运行需要访问系统目录的命令
