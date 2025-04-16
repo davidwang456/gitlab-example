@@ -18,10 +18,8 @@ build:
     - Write-Host "Current directory: $(pwd)"
     - Write-Host "MSBuild version:"
     - & "$MSBUILD_PATH" /version
-    - Write-Host "Restoring NuGet packages..."
-    - nuget restore "$WORKING_DIR/pj.sln"
     - Write-Host "Building solution..."
-    - & "$MSBUILD_PATH" "$WORKING_DIR/pj.sln" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
+    - cmd.exe /c "`"$MSBUILD_PATH`" `"$WORKING_DIR/dd.sln`" /t:Rebuild /p:Configuration=Release /p:Platform=`"Any CPU`""
     - if (!(Test-Path "$WORKING_DIR/bin/Release")) { throw "Build failed - Release directory not found" }
     - Write-Host "Build completed successfully"
     
