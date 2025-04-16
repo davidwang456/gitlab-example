@@ -2,6 +2,8 @@
 官方文档
 https://documentation.blackduck.com/zh-CN/bundle/detect/page/properties/detectors/python.html
 
+https://documentation.blackduck.com/zh-CN/bundle/synopsys_detect_9.2.0/resource/synopsys_detect_9.2.0/synopsys_detect_9.2.0.pdf
+
 本文档详细说明 Black Duck Detect 如何针对不同编程语言进行扫描。
 
 ## 支持的语言和检测器
