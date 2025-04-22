@@ -14,3 +14,5 @@ https://docs.gitlab.com/api/rest/
 
 blackduck 多语言支持
 https://documentation.blackduck.com/zh-CN/bundle/detect/page/properties/detectors/overview.html
+
+docker pull registry.access.redhat.com/ubi9/ubi:9.5-1744101466
